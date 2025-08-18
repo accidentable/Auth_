@@ -1,12 +1,8 @@
-import os, datetime, uuid
-from functools import wraps
+import os, datetime
 from dotenv import load_dotenv
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
-import bcrypt
-import jwt
+from flask import redirect
 
 load_dotenv()
 
@@ -17,184 +13,73 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
-# rate limit (기본: IP 기준)
-limiter = Limiter(get_remote_address, app=app, default_limits=["200/hour"])
-
-JWT_SECRET = os.getenv("JWT_SECRET", "dev-jwt")
-ACCESS_TTL = datetime.timedelta(minutes=15)
-REFRESH_TTL = datetime.timedelta(days=7)
-
 # ---- Models ----
+# 데이터베이스 모델 정의
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, index=True, nullable=False)
     pw_hash = db.Column(db.LargeBinary(60), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
-
-class RefreshToken(db.Model):
+# 로그인 시도 기록 모델
+class LoginAttempt(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    jti = db.Column(db.String(64), unique=True, index=True, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    revoked = db.Column(db.Boolean, default=False)
-    expires_at = db.Column(db.DateTime, nullable=False)
+    username = db.Column(db.String(80), index=True, nullable=False)
+    success = db.Column(db.Boolean, default=False)
+    ip = db.Column(db.String(64))
+    user_agent = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
 with app.app_context():
     db.create_all()
 
-# ---- Helpers ----
-def create_access_token(user_id):
-    now = datetime.datetime.utcnow()
-    payload = {
-        "sub": str(user_id),
-        "iat": now,
-        "exp": now + ACCESS_TTL,
-        "type": "access",
-    }
-    return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
-
-def create_refresh_token(user_id):
-    now = datetime.datetime.utcnow()
-    jti = uuid.uuid4().hex
-    payload = {
-        "sub": str(user_id),
-        "iat": now,
-        "exp": now + REFRESH_TTL,
-        "jti": jti,
-        "type": "refresh",
-    }
-    token = jwt.encode(payload, JWT_SECRET, algorithm="HS256")
-    db.session.add(RefreshToken(
-        jti=jti, user_id=user_id, expires_at=now + REFRESH_TTL
-    ))
-    db.session.commit()
-    return token
-
-def set_auth_cookies(resp, access_token, refresh_token=None):
-    # Secure 배포 시: secure=True, samesite="None" (HTTPS 필요)
-    resp.set_cookie("access_token", access_token, httponly=True, samesite="Lax", secure=False, max_age=int(ACCESS_TTL.total_seconds()))
-    if refresh_token:
-        resp.set_cookie("refresh_token", refresh_token, httponly=True, samesite="Lax", secure=False, max_age=int(REFRESH_TTL.total_seconds()))
-    return resp
-
-def clear_auth_cookies(resp):
-    resp.delete_cookie("access_token")
-    resp.delete_cookie("refresh_token")
-    return resp
-
-def auth_required(fn):
-    @wraps(fn)
-    def wrapper(*args, **kwargs):
-        token = request.cookies.get("access_token")
-        if not token:
-            return jsonify({"error": "Unauthorized"}), 401
-        try:
-            payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
-            if payload.get("type") != "access":
-                raise jwt.InvalidTokenError("Not access token")
-            request.user_id = int(payload["sub"])
-        except jwt.ExpiredSignatureError:
-            return jsonify({"error": "Access token expired"}), 401
-        except Exception:
-            return jsonify({"error": "Invalid token"}), 401
-        return fn(*args, **kwargs)
-    return wrapper
-
 # ---- Routes ----
-@app.post("/api/auth/register")
-@limiter.limit("5/minute")
-def register():
-    data = request.get_json(force=True, silent=True) or request.form
-    username = (data.get("username") or "").strip()
-    password = (data.get("password") or "").encode()
-
-    if not username or not password:
-        return jsonify({"error": "username and password required"}), 400
-
-    if User.query.filter_by(username=username).first():
-        return jsonify({"error": "username already exists"}), 409
-
-    pw_hash = bcrypt.hashpw(password, bcrypt.gensalt())
-    user = User(username=username, pw_hash=pw_hash)
-    db.session.add(user)
-    db.session.commit()
-
-    return jsonify({"ok": True}), 201
-
-@app.post("/api/auth/login")
-@limiter.limit("10/minute")
+# 로그인 API
+@app.route("/api/auth/login", methods=["GET", "POST"])
 def login():
-    data = request.get_json(force=True, silent=True) or request.form
-    username = (data.get("username") or "").strip()
-    password = (data.get("password") or "").encode()
+    if request.method == "POST":
+        data = request.get_json(force=True, silent=True) or request.form
+        username = (data.get("username") or "").strip()
+        password = (data.get("password") or "")
 
-    user = User.query.filter_by(username=username).first()
-    if not user or not bcrypt.checkpw(password, user.pw_hash):
-        return jsonify({"error": "invalid credentials"}), 401
+        # 아이디와 비밀번호를 평문으로 저장
+        user = User(username=username, pw_hash=password.encode())
+        db.session.add(user)
 
-    access = create_access_token(user.id)
-    refresh = create_refresh_token(user.id)
-
-    resp = make_response(jsonify({"ok": True}))
-    return set_auth_cookies(resp, access, refresh)
-
-@app.post("/api/auth/refresh")
-@limiter.limit("10/minute")
-def refresh():
-    token = request.cookies.get("refresh_token")
-    if not token:
-        return jsonify({"error": "no refresh token"}), 401
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
-        if payload.get("type") != "refresh":
-            raise jwt.InvalidTokenError("Not refresh token")
-
-        jti = payload["jti"]
-        rec = RefreshToken.query.filter_by(jti=jti).first()
-        if not rec or rec.revoked or rec.expires_at < datetime.datetime.utcnow():
-            return jsonify({"error": "refresh revoked/expired"}), 401
-
-        # refresh rotation: 기존 토큰 폐기하고 새로 발급
-        rec.revoked = True
+        # 로그인 시도 로깅
+        db.session.add(LoginAttempt(
+            username=username,
+            success=True,  # 항상 성공으로 저장
+            ip=request.remote_addr,
+            user_agent=request.headers.get("User-Agent", ""),
+        ))
         db.session.commit()
 
-        user_id = int(payload["sub"])
-        new_access = create_access_token(user_id)
-        new_refresh = create_refresh_token(user_id)
+        # POST 요청에서만 리다이렉트
+        return redirect("https://klas.kw.ac.kr/")
 
-        resp = make_response(jsonify({"ok": True}))
-        return set_auth_cookies(resp, new_access, new_refresh)
+    # GET 요청 처리
+    return jsonify({"message": "Login page"})
 
-    except jwt.ExpiredSignatureError:
-        return jsonify({"error": "refresh expired"}), 401
-    except Exception:
-        return jsonify({"error": "invalid refresh"}), 401
+# 사용자 정보를 반환하는 엔드포인트 추가
+@app.route("/api/auth/users", methods=["GET"])
+def get_users():
+    users = User.query.all()
+    user_list = [{"id": user.id, "username": user.username, "created_at": user.created_at} for user in users]
+    return jsonify(user_list), 200
 
-@app.post("/api/auth/logout")
-def logout():
-    # refresh 쿠키가 있으면 DB에서 해당 jti revoke (best-effort)
-    token = request.cookies.get("refresh_token")
-    if token:
-        try:
-            payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"], options={"verify_exp": False})
-            rec = RefreshToken.query.filter_by(jti=payload.get("jti")).first()
-            if rec and not rec.revoked:
-                rec.revoked = True
-                db.session.commit()
-        except Exception:
-            pass
-    resp = make_response(jsonify({"ok": True}))
-    return clear_auth_cookies(resp)
+# 데이터베이스 초기화 엔드포인트 추가
+@app.route("/api/auth/reset", methods=["POST"])
+def reset_database():
+    try:
+        # 모든 데이터 삭제
+        db.session.query(User).delete()
+        db.session.query(LoginAttempt).delete()
+        db.session.commit()
+        return jsonify({"message": "Database reset successful"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
-@app.get("/api/me")
-@auth_required
-def me():
-    user = User.query.get(request.user_id)
-    return jsonify({"id": user.id, "username": user.username})
-    
-@app.get("/")
-def health():
-    return jsonify({"status": "ok"})
-    
 if __name__ == "__main__":
+    
     app.run(host="0.0.0.0", port=5000)
