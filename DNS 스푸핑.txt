@@ -1,0 +1,59 @@
+공겨 - 172.20.10.3(칼리 리눅스)
+피해 - 172.20.10.2(윈도우)
+
+ARP (Address Resolution Protocol)
+IP 주소를 MAC주소로 변환하는 프로토콜 ->신뢰 기반으로 검증 X
+
+ARP 스푸핑
+공용 네트워크에 있는 공격자가 피해자와 게이트웨이의 IP-MAC 매핑 정보를 조작
+
+게이트웨이 IP-> 공격자의 MAC
+피해자 IP -> 공격자의 MAC
+
+<DNS 스푸핑 과정>
+1. 네트워크 인터페이스 확인(같은 서브넷에 있는지 확인)
+ip addr
+
+2. 피해자 IP 탐색
+sudo arp-scan --interface=eth0 --localnet
+
+3. IP 포워딩 활성화
+sudo sysctl -w net.ipv4.ip_forward=1 (중간자 역할을 위해 수행)
+
+4. apache2 실행
+
+5. ettercap -G & 실행
+
+6. host scan 후 host list에서 피해자 IP와 기본 게이트웨이 IP를 추가
+
+7. arp positioning 클릭 후 plugin에서 DNS spoofing 클릭 (Activating인지 확인) 
+
+8. arp -a로 MAC 변환 확인
+
+(네트워크 및 공유센터에서 해당 와이파이의 ipv6 꺼둘것)
+
+<vmware 네트워크 연결 안 될 때>
+nmcli connection show 
+
+nmcli device status 
+
+nmcli connection up eth0
+
+sudo nano /etc/NetworkManager/NetworkManager.conf
+
+sudo systemctl restart NetworkManager
+
+sudo apt update
+sudo apt install isc-dhcp-client
+sudo dhclient eth0
+
+<관련 자료>
+https://velog.io/@yoondonggyu/ettercap%EC%9D%84-%EC%9D%B4%EC%9A%A9%ED%95%9C-DNS-Spoofing-MITMMan-In-The-Middle-Attack-%EC%A4%91%EA%B0%84%EC%9E%90-%EA%B3%B5%EA%B2%A9
+
+
+https://www.notion.so/Kali-Linux-1e98c5f2970c80b68d40c116a015806a
+chrome://net-internals/#dns
+
+
+현재 스푸핑 자체는 성공했지만
+브라우저 혹은 사이트에서 막는 것 같음
